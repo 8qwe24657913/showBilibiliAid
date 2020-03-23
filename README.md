@@ -16,3 +16,5 @@
 
 PS：想要在由 vue 控制的地方额外插个元素进去还真是个技术活……
 
+**Update:** 写完脚本看了眼知乎，这就把映射的算法破解了……建议使用 https://greasyfork.org/zh-CN/scripts/398535-bv2av/code
+
