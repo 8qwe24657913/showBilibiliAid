@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 显示 av 号
 // @namespace    https://github.com/8qwe24657913
-// @version      0.1
+// @version      0.2
 // @description  在视频播放页面显示视频的 av 号
 // @author       8q
 // @match        http://www.bilibili.com/*
