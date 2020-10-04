@@ -44,7 +44,7 @@
             span.className = 'a-crumbs'
             span.setAttribute('style', 'margin: 0 16px;')
             span.appendChild(link)
-            inject = () => anchor.parentNode.previousElementSibling.appendChild(span)
+            inject = () => anchor.parentNode.appendChild(span)
         } else {
             // 番剧，使用 .av-link 的样式
             link.className = 'av-link'
