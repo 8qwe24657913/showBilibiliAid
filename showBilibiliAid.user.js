@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 显示 av 号
 // @namespace    https://github.com/8qwe24657913
-// @version      0.2
+// @version      0.3
 // @description  在视频播放页面显示视频的 av 号
 // @author       8q
 // @match        http://www.bilibili.com/*
@@ -11,9 +11,9 @@
 // ==/UserScript==
 
 // eslint-disable-next-line no-extra-semi
-;(function() {
+;(function () {
     'use strict'
-    let aid, link, inject, observer
+    let aid, link, anchor
     const setData = () => {
         link.href = `//www.bilibili.com/video/av${aid}/`
         link.textContent = `av${aid}`
@@ -25,49 +25,60 @@
             return
         }
         // 已插入链接且未被 vue 删除，常见于通过 pushState + ajax 实现的无刷新跳页
-        if (link && document.contains(link)) {
+        if (link && anchor && document.contains(anchor)) {
             setData()
             return
         }
-        // 视频统计信息加载完成之前不能插入 aid 信息，否则轻者被 vue 删除，重者页面错乱
-        const anchor = document.querySelector('.video-data .view, .media-count')
+        anchor = document.querySelector('.video-data span:not([title]):not([class]), .pub-info')
         if (!anchor) {
             console.error('bilibili 显示 av 号: 未能找到元素插入点', 'aid=', aid)
             return
         }
         link = document.createElement('a')
         link.target = '_blank'
+        link.className = 'show-bili-aid'
         setData()
-        if (anchor.classList.contains('view')) {
-            // 普通视频，使用 .a-crumbs 的样式
-            const span = document.createElement('span')
-            span.className = 'a-crumbs'
-            span.setAttribute('style', 'margin: 0 16px;')
-            span.appendChild(link)
-            inject = () => anchor.parentNode.appendChild(span)
+        // vue 你赢了，我用 shadow dom 你总碰不着了吧？
+        if (!anchor.shadowRoot) {
+            const clone = anchor.cloneNode(true)
+            anchor.attachShadow({ mode: 'open' })
+            anchor.shadowRoot.appendChild(clone)
+        }
+        const style = document.createElement('style')
+        if (!anchor.classList.contains('pub-info')) {
+            // 普通视频
+            style.textContent = `
+                a.show-bili-aid {
+                    margin-left: 16px;
+                    color: #999;
+                    text-decoration: none;
+                }
+            `
         } else {
             // 番剧，使用 .av-link 的样式
-            link.className = 'av-link'
-            inject = () => anchor.nextElementSibling.appendChild(link)
+            style.textContent = `
+               .pub-info {
+                   display: block;
+                   float: left;
+                   height: 16px;
+                   line-height: 16px;
+                   margin-right: 10px;
+               }
+               a.show-bili-aid {
+                   display: block;
+                   float: left;
+                   height: 16px;
+                   line-height: 16px;
+                   color: #212121;
+                   text-decoration: none;
+               }
+               a.show-bili-aid:hover {
+                   color: #03a0d6;
+               }
+            `
         }
-        // 等待视频统计信息加载完成再插入
-        if (/\d+/.test(anchor.textContent)) {
-            inject()
-        } else {
-            if (observer) {
-                observer.disconnect()
-            } else {
-                observer = new MutationObserver(() => {
-                    observer.disconnect()
-                    inject()
-                })
-            }
-            observer.observe(anchor, {
-                childList: true,
-                subtree: true,
-                characterData: true,
-            })
-        }
+        anchor.shadowRoot.appendChild(style)
+        anchor.shadowRoot.appendChild(link)
     }
     const target = window.__INITIAL_STATE__ && 'aid' in window.__INITIAL_STATE__ ? window.__INITIAL_STATE__ : window
     if (target === window && !('aid' in window)) window.aid = ''
